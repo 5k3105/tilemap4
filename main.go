@@ -112,10 +112,10 @@ func main() {
 	wnd.MouseWheel = func(x, y int) {
 		action = 1
 		if y == 1 {
-			cscale -= 1.0 //cmultiplier
+			cscale /= 0.95 //cmultiplier
 		}
 		if y == -1 {
-			cscale += 1.0 //cmultiplier
+			cscale *= 0.95 //cmultiplier
 		}
 		cv.Scale(cscale, cscale)
 		//gfx.ZoomSurface(sdlsurface, cscale, cscale, 1)
