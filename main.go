@@ -8,7 +8,6 @@ import (
 	"github.com/tfriedel6/canvas/sdlcanvas"
 	"log"
 	"math"
-	"os"
 	"time"
 )
 
@@ -27,21 +26,16 @@ func load() {
 	tilefiles = []string{"forest", "grass", "marsh", "village", "rocket", "water"}
 	tileset = make(map[string]*canvas.Image)
 
+	err := pcx.FormatError("")
+	if err != "" {
+	}
+
 	for _, tf := range tilefiles {
-		file, err := os.Open("u2_" + tf + ".pcx")
-		if err != nil {
-			log.Fatalf("failed to open image: %v", err)
-		}
-/**/
-		_, err = pcx.Decode(file)
-		if err != nil {
-			log.Fatalf("failed to open image: %v", err)
-		}
-		
-		img2, err := canvas.LoadImage(file)//img)//.(*image.RGBA))
+		file := "u2_" + tf + ".pcx"
+		img2, err := canvas.LoadImage(file)
 		if err != nil {
 			log.Fatalf("failed to load image: %v", err)
-		}		
+		}
 		tileset[tf] = img2
 	}
 
@@ -63,16 +57,16 @@ func main() {
 		return
 	}
 	defer wnd.Destroy()
-	
+
 	load()
 
-/*
-	sdlsurface, err := wnd.Window.GetSurface()
-	if err != nil {
-		log.Println(err)
-		return
-	}	
-*/
+	/*
+		sdlsurface, err := wnd.Window.GetSurface()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	*/
 
 	cv.SetFont("Righteous-Regular.ttf", 12)
 
