@@ -23,7 +23,7 @@ var (
 	cscale, cmultiplier float64
 )
 
-func init() {
+func load() {
 	tilefiles = []string{"forest", "grass", "marsh", "village", "rocket", "water"}
 	tileset = make(map[string]*canvas.Image)
 
@@ -32,13 +32,13 @@ func init() {
 		if err != nil {
 			log.Fatalf("failed to open image: %v", err)
 		}
-
-		img, err := pcx.Decode(file)
+/**/
+		_, err = pcx.Decode(file)
 		if err != nil {
 			log.Fatalf("failed to open image: %v", err)
 		}
 		
-		img2, err := canvas.LoadImage(img)//.(*image.RGBA))
+		img2, err := canvas.LoadImage(file)//img)//.(*image.RGBA))
 		if err != nil {
 			log.Fatalf("failed to load image: %v", err)
 		}		
@@ -63,6 +63,8 @@ func main() {
 		return
 	}
 	defer wnd.Destroy()
+	
+	load()
 
 /*
 	sdlsurface, err := wnd.Window.GetSurface()
