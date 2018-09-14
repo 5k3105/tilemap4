@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	//"github.com/veandco/go-sdl2/gfx"
 	"github.com/samuel/go-pcx/pcx"
 	"github.com/tfriedel6/canvas"
 	"github.com/tfriedel6/canvas/sdlcanvas"
@@ -19,7 +18,8 @@ var (
 	board               Board
 	selector            Board
 	selected_tile       string
-	cscale, cmultiplier float64
+	lastscale, cscale, cmultiplier float64
+	screenw, screenh = 1280, 720
 )
 
 func load() {
@@ -44,14 +44,14 @@ func load() {
 
 	offset = img.Width() / 2
 	scale = float64(img.Width())
-
+	println("scale = ", scale)
 	cscale = 1.0
-	cmultiplier = 0.8
+	cmultiplier = 0.01 //0.95
 
 }
 
 func main() {
-	wnd, cv, err := sdlcanvas.CreateWindow(1280, 720, "Tile Map")
+	wnd, cv, err := sdlcanvas.CreateWindow(screenw, screenh, "Tile Map")
 	if err != nil {
 		log.Println(err)
 		return
@@ -112,14 +112,14 @@ func main() {
 	wnd.MouseWheel = func(x, y int) {
 		action = 1
 		if y == 1 {
-			cscale /= 0.95 //cmultiplier
+			//cscale /= cmultiplier
+			cscale += cmultiplier
 		}
 		if y == -1 {
-			cscale *= 0.95 //cmultiplier
+			//cscale *= cmultiplier
+			cscale -= cmultiplier
 		}
-		cv.Scale(cscale, cscale)
-		//gfx.ZoomSurface(sdlsurface, cscale, cscale, 1)
-		println("y:  ", y)
+		//cv.Scale(cscale, cscale)
 	}
 
 	wnd.KeyDown = func(scancode int, rn rune, name string) {
@@ -149,6 +149,14 @@ func main() {
 
 		w, h := float64(cv.Width()), float64(cv.Height())
 
+        if cscale != lastscale {
+			var newWidth = w * cscale
+			var newHeight = h * cscale
+			cv.Translate(-((newWidth-w)/2), -((newHeight-h)/2))
+			cv.Scale(cscale, cscale)
+			lastscale = cscale
+        } 	
+        	
 		// Clear the screen
 		cv.SetFillStyle("#000")
 		cv.FillRect(0, 0, w, h)
@@ -176,7 +184,7 @@ func main() {
 		for _, p := range selector.Positions {
 			t := p.PTile
 			if t != nil {
-				cv.DrawImage(tileset[t.Type], float64(t.X), float64(t.Y)) //.(*image.RGBA
+				cv.DrawImage(tileset[t.Type], float64(t.X), float64(t.Y))
 			}
 		}
 
