@@ -11,15 +11,18 @@ import (
 )
 
 var (
-	tileset             map[string]*canvas.Image
-	tilefiles           []string
-	offset              int
-	scale               float64
-	board               Board
-	selector            Board
-	selected_tile       string
-	lastscale, cscale, cmultiplier float64
+	wnd              *sdlcanvas.Window
+	cv               *canvas.Canvas
+	tileset          map[string]*canvas.Image
+	tilefiles        []string
+	offset           int
+	board            Board
+	selector         Board
+	selected_tile    string
+	scale            float64
+	cscale, nscale   float64
 	screenw, screenh = 1280, 720
+	rescale          bool
 )
 
 func load() {
@@ -46,12 +49,11 @@ func load() {
 	scale = float64(img.Width())
 	println("scale = ", scale)
 	cscale = 1.0
-	cmultiplier = 0.01 //0.95
-
 }
 
 func main() {
-	wnd, cv, err := sdlcanvas.CreateWindow(screenw, screenh, "Tile Map")
+	var err error
+	wnd, cv, err = sdlcanvas.CreateWindow(screenw, screenh, "Tile Map")
 	if err != nil {
 		log.Println(err)
 		return
@@ -68,7 +70,7 @@ func main() {
 		}
 	*/
 
-	cv.SetFont("Righteous-Regular.ttf", 12)
+	cv.SetFont("SometypeMono-Medium.ttf", 12) /// SometypeMono-Regular Righteous-Regular
 
 	ofx, ofy := 2, 2
 	rows, columns := 20, 10
@@ -112,14 +114,15 @@ func main() {
 	wnd.MouseWheel = func(x, y int) {
 		action = 1
 		if y == 1 {
-			//cscale /= cmultiplier
-			cscale += cmultiplier
+			cscale += 0.05
+			nscale = 1.05
+			rescale = true
 		}
 		if y == -1 {
-			//cscale *= cmultiplier
-			cscale -= cmultiplier
+			cscale -= 0.05
+			nscale = 0.95
+			rescale = true
 		}
-		//cv.Scale(cscale, cscale)
 	}
 
 	wnd.KeyDown = func(scancode int, rn rune, name string) {
@@ -147,19 +150,24 @@ func main() {
 		action -= diff.Seconds() * 3
 		action = math.Max(0, action)
 
-		w, h := float64(cv.Width()), float64(cv.Height())
+		//cv.Save()
 
-        if cscale != lastscale {
-			var newWidth = w * cscale
-			var newHeight = h * cscale
-			cv.Translate(-((newWidth-w)/2), -((newHeight-h)/2))
-			cv.Scale(cscale, cscale)
-			lastscale = cscale
-        } 	
-        	
+		w, h := float64(cv.Width()), float64(cv.Height())
 		// Clear the screen
 		cv.SetFillStyle("#000")
 		cv.FillRect(0, 0, w, h)
+		if rescale { /// http://jsfiddle.net/mBzVR/4/
+			nw := w * nscale
+			nh := h * nscale			
+			//nw := w * cscale
+			//nh := h * cscale
+			cv.Translate(-((nw - w) / 2), -((nh - h) / 2))
+			cv.Scale(nscale, nscale)
+			//cv.Scale(cscale, cscale)
+			rescale = false
+		}
+
+
 
 		new_grid(cv)
 
@@ -191,13 +199,43 @@ func main() {
 		cv.SetFillStyle("#778899")
 		cv.FillText(fmt.Sprintf("x:%d  y:%d", int(tx), int(ty)), tx, ty-2.0)
 
+		//cv.Restore()
+
 	})
 }
 
 func fit_gridf(mx, my float64) (tx, ty float64) {
-	nxt := offset * 2
+	//nxt := offset * 2
+	
+	nxt := offset * 2 //* int(cscale)
+	
+	
+	//nxt := int(float64(offset*2)/ cscale*cscale)
+
+	//nx := int((float64(cv.Width())/float64(screenw)* cscale) * mx)
+	//ny := int((float64(cv.Height())/float64(screenh)* cscale) * my)
+
+	//nx := int((float64(cv.Width())* cscale/float64(screenw)) * mx)
+	//ny := int((float64(cv.Height())* cscale/float64(screenh)) * my)
+
+	//nx := int((float64(cv.Width())/float64(screenw) )* mx)
+	//ny := int((float64(cv.Height())/float64(screenh) )* my)
+
+
+	//tx = ( mx*float64(nxt)/cscale*float64(nxt))
+	//ty = ( my*float64(nxt)/cscale*float64(nxt))
+
 	nx, ny := int(mx), int(my)
+	//tx, ty = float64((nx/nxt)*nxt)*cscale, float64((ny/nxt)*nxt)*cscale
+	//nx, ny := int(mx/cscale), int(my/cscale)
+	//nxt := float64(offset * 2) 	*cscale
+	//nx, ny := mx, my
+	
 	tx, ty = float64((nx/nxt)*nxt), float64((ny/nxt)*nxt)
+	//tx, ty = tx/cscale, ty/cscale
+	//nx, ny := int(mx*cscale), int(my*cscale)
+	//tx, ty = float64(nx/nxt), float64(ny/nxt)
+
 	return
 }
 
@@ -225,3 +263,32 @@ func new_grid(cv *canvas.Canvas) {
 		cv.Stroke()
 	}
 }
+
+/*
+
+func new_grid(cv *canvas.Canvas) {
+	cs := scale * cscale
+	penwidth := 1.0
+	ix, iy := cs*2, cs*2
+	vstep, hstep := cs, cs
+	step := 1.0 * cs
+
+	for x := ix; x <= hstep*step; x += step {
+		cv.SetStrokeStyle("#1e90ff")
+		cv.SetLineWidth(penwidth)
+		cv.BeginPath()
+		cv.MoveTo(x, 0)
+		cv.LineTo(x, vstep*step)
+		cv.Stroke()
+	}
+
+	for y := iy; y <= vstep*step; y += step {
+		cv.SetStrokeStyle("#1e90ff")
+		cv.SetLineWidth(penwidth)
+		cv.BeginPath()
+		cv.MoveTo(0, y)
+		cv.LineTo(hstep*step, y)
+		cv.Stroke()
+	}
+}
+*/
